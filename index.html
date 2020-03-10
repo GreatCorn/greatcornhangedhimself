@@ -198,21 +198,21 @@
 </head>
 <body onload="Start()" onmousemove="OnMouseMove(event)" >
 	<div id="fg" class=foreground style="opacity: 1;"></div>
-	<img id="ropeBG" class=sprite src="cornropebg.png">
-	<img id="rope" class=sprite src="cornrope.png">
+	<img id="ropeBG" class=sprite src="cornropebg.png" ondragstart="return false;">
+	<img id="rope" class=sprite src="cornrope.png" ondragstart="return false;">
 	
 	<div id="cornHead" class=sprite onmouseenter="BodyHang(0)">
-		<img src="cornhead.png">
+		<img src="cornhead.png" ondragstart="return false;">
 		<div id="cornBody" class=sprite style="transform: translate(52px, -20px)" onmouseenter="BodyHang(1)">
-			<img src="cornbody1.png">
+			<img src="cornbody1.png" ondragstart="return false;">
 			<div id="cornLegs" class=sprite style="transform: translate(26px, -28px)" onmouseenter="BodyHang(2)">
-				<img src="cornlegs.png">
+				<img src="cornlegs.png" ondragstart="return false;">
 			</div>
 			<div id="cornArmL" class=sprite style="transform: translate(2px, -111px)" onmouseenter="BodyHang(3)">
-				<img src="cornarm.png">
+				<img src="cornarm.png" ondragstart="return false;">
 			</div>
 			<div id="cornArmR" class=sprite style="transform: translate(48px, -96px)" onmouseenter="BodyHang(4)">
-				<img src="cornarm1.png">
+				<img src="cornarm1.png" ondragstart="return false;">
 			</div>
 		</div>
 	</div>
