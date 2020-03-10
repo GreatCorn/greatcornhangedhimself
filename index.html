@@ -44,6 +44,10 @@
 		
 		var mouserel = [];
 		var mouseprev = [];
+
+		
+		
+		
 		function Start(){
 			document.getElementById("fg").style.opacity = 0;
 			setTimeout(function(){
@@ -81,8 +85,8 @@
 			
 			ropeBG.style.transformOrigin = "9px 0";
 			ropeBG.style.left = "calc(50% - 9px)";
-			ropeBG.style.top = "-256px";
-			rope.style.transformOrigin = "19px -256px";
+			ropeBG.style.top = "-192px";
+			rope.style.transformOrigin = "19px -192px";
 			rope.style.left = "calc(50% - 19px)";
 			rope.style.top = "calc(50% - 224px)";
 			
@@ -198,9 +202,9 @@
 </head>
 <body onload="Start()" onmousemove="OnMouseMove(event)" >
 	<div id="fg" class=foreground style="opacity: 1;"></div>
-	<img id="ropeBG" class=sprite src="cornropebg.png" ondragstart="return false;">
+	<canvas style="position: fixed; background: #fff; top: calc(50% - 128px); min-height: 100%; min-width: 100%; z-index: -1;"></canvas>
+	<img id="ropeBG" class=sprite src="cornropebg.png" style="z-index: -2;" ondragstart="return false;">
 	<img id="rope" class=sprite src="cornrope.png" ondragstart="return false;">
-	
 	<div id="cornHead" class=sprite onmouseenter="BodyHang(0)">
 		<img src="cornhead.png" ondragstart="return false;">
 		<div id="cornBody" class=sprite style="transform: translate(52px, -20px)" onmouseenter="BodyHang(1)">
