@@ -1,0 +1,221 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<style>
+		body {
+			margin: 0;
+			overflow: hidden;
+			background-color: #fff;
+			image-rendering: pixelated;
+		}
+		.sprite {
+			position: fixed;
+		}
+		.shadow {
+			position: fixed;
+			top: calc(100% - 64px);
+			height: 50px;
+			width: 100px;
+			background-color: #000;
+			opacity: 0.5;
+			border-radius: 50%;
+		}
+		
+		.foreground {
+			position: fixed;
+			opacity: 1;
+			transition: opacity 0.5s linear;
+			background: #fff;
+			z-index: 12;
+			min-width:100%;
+			min-height:100%;
+		}
+	</style>
+	<script>
+		var cornHead, cornBody, cornLegs, cornArmL, cornArmR, rope, ropeBG, shadow;
+		var cornRot = [];
+		var cornRotT = [];
+		var cornRotSpeed = [];
+		for(let i=0; i<6; i++){
+			cornRot[i] = 0;
+			cornRotT[i] = 0;
+			cornRotSpeed[i] = 0;
+		}
+		
+		var mouserel = [];
+		var mouseprev = [];
+		function Start(){
+			document.getElementById("fg").style.opacity = 0;
+			setTimeout(function(){
+				document.getElementById("fg").style.display = "none";
+			}, 600);
+			document.addEventListener('touchmove', function(event){
+				OnTouchMove(event);
+			}, {passive: true});
+			
+			console.log("STARTED");
+			cornHead = document.getElementById("cornHead");
+			cornBody = document.getElementById("cornBody");
+			cornLegs = document.getElementById("cornLegs");
+			cornArmL = document.getElementById("cornArmL");
+			cornArmR = document.getElementById("cornArmR");
+			ropeBG = document.getElementById("ropeBG");
+			rope = document.getElementById("rope");
+			shadow = document.getElementById("shadow");
+			
+			shadow.style.left = "30%";
+			shadow.style.width = "50%";
+			
+			cornHead.style.transformOrigin = "84px 21px"
+			cornHead.style.left = "calc(50% - 100px)";
+			cornHead.style.top = "calc(50% - 172px)";
+			
+			cornBody.style.transformOrigin = "46px 28px"
+			cornBody.style.zIndex = -1;
+			
+			cornLegs.style.transformOrigin = "33px 2px"
+			cornLegs.style.zIndex = -2;
+			
+			cornArmL.style.transformOrigin = "24px 13px"
+			cornArmR.style.transformOrigin = "16px 3px"
+			
+			ropeBG.style.transformOrigin = "9px 0";
+			ropeBG.style.left = "calc(50% - 9px)";
+			ropeBG.style.top = "-256px";
+			rope.style.transformOrigin = "19px -256px";
+			rope.style.left = "calc(50% - 19px)";
+			rope.style.top = "calc(50% - 224px)";
+			
+			
+			
+			Update();
+		}
+		function OnMouseMove(event){
+			mouserel[0] = -(event.clientX-mouseprev[0]);
+			mouserel[1] = event.clientY-mouseprev[1];
+			mouseprev[0]=event.clientX;
+			mouseprev[1]=event.clientY;
+		}
+		function OnTouchMove(event){
+			let touches = event.changedTouches;
+			mouserel[0] = -(touches[0].pageX-mouseprev[0])/2;
+			mouserel[1] = (touches[0].pageY-mouseprev[1])/2;
+			let elem = document.elementFromPoint(touches[0].pageX, touches[0].pageY);
+			if(elem){
+				//console.log(elem.tagName);
+				if(elem.tagName == 'IMG'){
+					if (elem.parentElement.id == 'cornHead'){
+						//console.log('HEAD');
+						BodyHang(0);
+					}
+					if (elem.parentElement.id == 'cornBody'){
+						//console.log('BODY');
+						BodyHang(1);
+					}
+					if (elem.parentElement.id == 'cornLegs'){
+						//console.log('LEGS');
+						BodyHang(2);
+					}
+					if (elem.parentElement.id == 'cornArmL'){
+						//console.log('ARML');
+						BodyHang(3);
+					}
+					if (elem.parentElement.id == 'cornArmR'){
+						//console.log('ARMR');
+						BodyHang(4);
+					}
+				}
+			}
+			mouseprev[0]=touches[0].pageX;
+			mouseprev[1]=touches[0].pageY;
+		}
+		function Update(){
+			var rectHead, rectLegs, rectShadow;
+			rectHead = cornHead.getBoundingClientRect();
+			rectLegs = cornLegs.getBoundingClientRect();
+			rectShadow = shadow.getBoundingClientRect();
+			
+			shadow.style.left = Lerp(rectShadow.x, Math.min(rectHead.x, rectLegs.x)+24, 0.1);
+			shadow.style.width = Lerp(rectShadow.width, Math.max(rectHead.right, rectLegs.right)-Math.min(rectHead.x, rectLegs.x)-32, 0.1);
+			shadow.style.opacity = 0.6-(rectShadow.width/window.innerWidth)/3;
+			
+			cornHead.style.transform = "rotate("+cornRot[0].toString()+"deg)";
+			cornBody.style.transform = "translate(52px, -20px) rotate("+cornRot[1].toString()+"deg)";
+			cornLegs.style.transform = "translate(26px, -28px) rotate("+cornRot[2].toString()+"deg)";
+			cornArmL.style.transform = "translate(2px, -111px) rotate("+cornRot[3].toString()+"deg)";
+			cornArmR.style.transform = "translate(48px, -96px) rotate("+cornRot[4].toString()+"deg)";
+			rope.style.transform = "rotate("+(cornRot[0]/50).toString()+"deg)";
+			ropeBG.style.transform = "rotate("+(cornRot[0]/100).toString()+"deg)";
+			
+			for(let i=0; i<cornRot.length; i++){
+				if(isNaN(cornRot[i]) || isNaN(cornRotSpeed[i])){
+					cornRot[i] = 0;
+					cornRotSpeed[i] = 0;
+					console.log(cornRot[i]);
+				}
+				cornRotSpeed[i] = Lerp(cornRotSpeed[i], cornRotT[i]-cornRot[i], 0.005);
+				cornRot[i] += cornRotSpeed[i]/20;
+				//cornRot[i] = Clamp(cornRot[i], -45, 45);
+				
+				if(cornRot[i] > -1 && cornRot[i] < 1){
+					if(Math.random() > 0.99){
+						cornRotT[i] = RandomRange(-2, 2);
+					}
+				}
+				else{
+					if(Math.random() > 0.8){
+						cornRotT[i] = 0;
+					}
+				}
+			}
+			setTimeout(Update, 1);
+		}
+		function BodyHang(handle){
+			let xspeed = mouserel[0];
+			cornRotT[handle] += Clamp(xspeed*2, -45, 45);
+			//console.log(mouserel[0]);
+			for(let i=handle; i>=0; i--){
+				cornRotT[i] += Clamp(xspeed*2, -45, 45)/10 * (i+1);
+			}
+		}
+		
+		function Lerp(a, b, t){
+			return a + (b - a) * t;
+		}
+		function RandomRange(min, max){
+			return Math.random() * (+max - +min) + +min; 
+		}
+		function Clamp(value, min, max){
+			if(value > max){
+				return max;
+			}
+			if(value < min){
+				return min;
+			}
+			return value;
+		}
+	</script>
+</head>
+<body onload="Start()" onmousemove="OnMouseMove(event)" >
+	<div id="fg" class=foreground style="opacity: 1;"></div>
+	<img id="ropeBG" class=sprite src="cornropebg.png">
+	<img id="rope" class=sprite src="cornrope.png">
+	
+	<div id="cornHead" class=sprite onmouseenter="BodyHang(0)">
+		<img src="cornhead.png">
+		<div id="cornBody" class=sprite style="transform: translate(52px, -20px)" onmouseenter="BodyHang(1)">
+			<img src="cornbody1.png">
+			<div id="cornLegs" class=sprite style="transform: translate(26px, -28px)" onmouseenter="BodyHang(2)">
+				<img src="cornlegs.png">
+			</div>
+			<div id="cornArmL" class=sprite style="transform: translate(2px, -111px)" onmouseenter="BodyHang(3)">
+				<img src="cornarm.png">
+			</div>
+			<div id="cornArmR" class=sprite style="transform: translate(48px, -96px)" onmouseenter="BodyHang(4)">
+				<img src="cornarm1.png">
+			</div>
+		</div>
+	</div>
+	<div id="shadow" class=shadow style="width: 10px; left:10px;"></div>
+</body>
+</html>
