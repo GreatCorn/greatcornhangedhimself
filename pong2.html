@@ -1,0 +1,181 @@
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<style>
+		body {
+			overflow: hidden;
+			background: #000;
+			image-rendering: pixelated;
+		}
+		.paddle {
+			background: #fff;
+			position: fixed;
+			height: 64px;
+			width: 8px;
+		}
+		.ball {
+			background: #fff;
+			position: fixed;
+			height: 8px;
+			width: 8px;
+		}
+		.decor {
+			position: fixed;
+			left: calc(50% - 2px);
+			height: calc(100% - 16px);
+			border: 2px dotted #fff;
+		}
+		p {
+			margin: 0;
+			font-family: system;
+			font-size: 50vh;
+			position: fixed;
+			color: #fff;
+		}
+		@font-face {
+			font-family: system;
+			src: url('slkscr.ttf');
+		}
+	</style>
+	<script>
+		var paddlePlayer, paddleOponnent, ball;
+		var scorePlayer, scoreOpponent;
+		var paddlePlayerRect, paddleOponnentRect;
+		var touchScreen = is_touch_device();
+		var touchYRel = 0;
+		var touchYPrevious = 0;
+		var ballDirection = 0;
+		RandomizeDirection();
+		
+		function Start(){
+			console.log(is_touch_device());
+			paddlePlayer = document.getElementById("paddlePlayer");
+			paddleOponnent = document.getElementById("paddleOponnent");
+			ball = document.getElementById("ball");
+			scorePlayer = document.getElementById("scorePlayer");
+			scoreOpponent = document.getElementById("scoreOpponent");
+			paddlePlayerRect = paddlePlayer.getBoundingClientRect();
+			paddleOponnentRect = paddleOponnent.getBoundingClientRect();
+			
+			document.addEventListener('touchmove', function(event){
+				OnTouchMove(event);
+			}, {passive: true});
+			document.addEventListener('touchstart', function(event){
+				touchYPrevious = event.changedTouches[0].pageY;
+			}, {passive: true});
+			Update();
+		}
+		function Update(){
+			scorePlayer.style.display = "none";
+			scoreOpponent.style.display = "none";
+			
+			ball.style.left = ball.getBoundingClientRect().x+Math.cos(ballDirection / 180 * Math.PI)*2;
+			ball.style.top = ball.getBoundingClientRect().y+Math.sin(ballDirection / 180 * Math.PI)*2;
+			if(parseInt(ball.style.top) < 16){
+				ballDirection -= (ballDirection+180)*2;
+				ball.style.top = 20;
+			}
+			if(parseInt(ball.style.top) > window.innerHeight-24){
+				ballDirection -= (ballDirection+180)*2;
+				ball.style.top = window.innerHeight-28;
+			}
+			if(InRange(parseInt(ball.style.top), paddlePlayer.getBoundingClientRect().y-8, paddlePlayer.getBoundingClientRect().y+72) && parseInt(ball.style.left)<24){
+				ballDirection = (((parseInt(ball.style.top)+4)-(paddlePlayer.getBoundingClientRect().y+32))/32)*70;
+			}
+			if(InRange(parseInt(ball.style.top), paddleOponnent.getBoundingClientRect().y-8, paddleOponnent.getBoundingClientRect().y+72) && parseInt(ball.style.left)>window.innerWidth-32){
+				ballDirection = 180-(((parseInt(ball.style.top)+4)-(paddleOponnent.getBoundingClientRect().y+32))/32)*70;
+			}
+			
+			if(parseInt(ball.style.left+4)>window.innerWidth/2){
+				if (paddleOponnent.getBoundingClientRect().y > ball.getBoundingClientRect().y-16){
+					paddleOponnent.style.top = Lerp(paddleOponnent.getBoundingClientRect().y, ball.getBoundingClientRect().y-24, 0.023);
+				}
+				if (paddleOponnent.getBoundingClientRect().y < ball.getBoundingClientRect().y+48){
+					paddleOponnent.style.top = Lerp(paddleOponnent.getBoundingClientRect().y, ball.getBoundingClientRect().y-24, 0.023);
+				}
+				paddleOponnent.style.top = Clamp(paddleOponnent.getBoundingClientRect().y, 16, window.innerHeight-80);
+			}
+			if(parseInt(ball.style.left)<16){
+				scoreOpponent.innerText = parseInt(scoreOpponent.innerText) + 1;
+				RandomizeDirection();
+				setTimeout(Update, 500);
+				return;
+			}
+			if (parseInt(ball.style.left)>window.innerWidth-24){
+				scorePlayer.innerText = parseInt(scorePlayer.innerText) + 1;
+				RandomizeDirection();
+				setTimeout(Update, 500);
+				return;
+			}
+			
+			setTimeout(Update, 1);
+		}
+		
+		function OnMouseMove(event){
+			if(!touchScreen){
+				paddlePlayer.style.top = event.clientY-32;
+				paddlePlayer.style.top = Clamp(paddlePlayer.getBoundingClientRect().y, 16, window.innerHeight-80);
+			}
+		}
+		function OnTouchMove(event){
+			let touches = event.changedTouches;
+			touchYRel = (touches[0].pageY-touchYPrevious)/2;
+				paddlePlayer.style.top = paddlePlayer.getBoundingClientRect().y+touchYRel;
+				paddlePlayer.style.top = Clamp(paddlePlayer.getBoundingClientRect().y, 16, window.innerHeight-80);
+			touchYPrevious = touches[0].pageY;
+		}
+		
+		function RandomizeDirection(){
+			if(ball){
+				ball.style.left = "calc(50% - 4px)";
+				ball.style.top = "calc(50% - 4px)";
+				scorePlayer.style.display = "block";
+				scoreOpponent.style.display = "block";
+			}
+			if(Math.random > 0.5){
+				ballDirection = RandomRange(-70, 70);
+			}
+			else{
+				ballDirection = RandomRange(110, 250);
+			}
+		}
+		
+		function is_touch_device() {  
+			try {  
+				document.createEvent("TouchEvent");  
+				return true;  
+			} catch (e) {  
+				return false;  
+			}  
+		}
+		function Clamp(value, min, max){
+			if(value < min){
+				return min;
+			}
+			if(value > max){
+				return max;
+			}
+			return value;
+		}
+		function RandomRange(min, max){
+			return Math.random() * (+max - +min) + +min; 
+		}
+		function InRange(value, min, max){
+			if(value>min && value<max){
+				return true;
+			}
+			return false;
+		}
+		function Lerp(a, b, t){
+			return a + (b - a) * t;
+		}
+	</script>
+</head>
+<body onload="Start()" onmousemove="OnMouseMove(event)">
+	<p id="scorePlayer" style="top:5%; left: 5%;">0</p>
+	<p id="scoreOpponent" style="top:5%; right: 5%;">0</p>
+	<div id="paddlePlayer" class=paddle style="left:16px; top: calc(50% - 32px);"></div>
+	<div id="paddleOponnent" class=paddle style="right:16px; top: calc(50% - 32px);"></div>
+	<div id="ball" class=ball style="left:calc(50% - 4px); top: calc(50% - 4px);"></div>
+	<div id="decor" class=decor></div>
+</body>
