@@ -1,6 +1,6 @@
 <html>
 <head>
-	<meta name="viewport" content="height=device-height, initial-scale=1.0"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<style>
 		body {
 			margin: 0;
@@ -45,6 +45,7 @@
 		var mouserel = [];
 		var mouseprev = [];
 
+		var accelerometer = new Accelerometer();
 		
 		
 		
@@ -179,6 +180,9 @@
 			cornRotT[handle] += Clamp(xspeed*2, -45, 45);
 			//console.log(mouserel[0]);
 			for(let i=handle; i>=0; i--){
+				cornRotT[i] += Clamp(xspeed*2, -45, 45)/10 * (i+1);
+			}
+			for(let i=handle; i<cornRotT.length; i++){
 				cornRotT[i] += Clamp(xspeed*2, -45, 45)/10 * (i+1);
 			}
 		}
