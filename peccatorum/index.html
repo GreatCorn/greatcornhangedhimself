@@ -11,18 +11,41 @@
 		}
 		.symbol{
 			transform: scale(0.8);
-			transition: transform 0.5s ease;
+			transition: transform 0.5s ease, box-shadow 0.8s ease;
 			cursor: pointer;
+			border-radius: 100%;
 			max-width: 100%;
 		}
 		.symbol:hover{
 			transform: scale(1);
+		}
+		.sLust:hover{
+			box-shadow: inset 0 0 64px #0000FF, 0 0 40px #0000FF;
+		}
+		.sGluttony:hover{
+			box-shadow: inset 0 0 64px #FF8400, 0 0 40px #FF8400;
+		}
+		.sGreed:hover{
+			box-shadow: inset 0 0 64px #7D007E, 0 0 40px #7D007E;
+		}
+		.sSloth:hover{
+			box-shadow: inset 0 0 64px #09D4FF, 0 0 40px #09D4FF;
+		}
+		.sWrath:hover{
+			box-shadow: inset 0 0 64px #FF0000, 0 0 40px #FF0000;
+		}
+		.sEnvy:hover{
+			box-shadow: inset 0 0 64px #0CFF2A, 0 0 40px #0CFF2A;
+		}
+		.sPride:hover{
+			box-shadow: inset 0 0 64px #FFFF14, 0 0 40px #FFFF14;
 		}
 		.symbols{
 			display: block;
 			width: fit-content;
 			margin-left: auto;
 			margin-right: auto;
+			text-align: center;
 		}
 		@font-face {
 			font-family: "MyType";
@@ -80,17 +103,17 @@
 		<span class=helper></span><img class='modal-content' id='modalContent' src='Lust.jpg' onclick='window.open(this.src, "_blank");'>
 	</DIV>
 	<DIV class=symbols>
-		<IMG class=symbol src='lust.png' onclick='OpenImage("Lust")'>
-		<IMG class=symbol src='gluttony.png' onclick='OpenImage("Gluttony")'>
-		<IMG class=symbol src='greed.png' onclick='OpenImage("Greed")'>
+		<IMG class='symbol sLust' src='lust.png' onclick='OpenImage("Lust")'>
+		<IMG class='symbol sGluttony' src='gluttony.png' onclick='OpenImage("Gluttony")'>
+		<IMG class='symbol sGreed' src='greed.png' onclick='OpenImage("Greed")'>
 	</DIV>
 	<DIV class=symbols>
-		<IMG class=symbol src='sloth.png' onclick='OpenImage("Sloth")'>
-		<IMG class=symbol src='wrath.png' onclick='OpenImage("Wrath")'>
-		<IMG class=symbol src='envy.png' onclick='OpenImage("Envy")'>
+		<IMG class='symbol sSloth' src='sloth.png' onclick='OpenImage("Sloth")'>
+		<IMG class='symbol sWrath' src='wrath.png' onclick='OpenImage("Wrath")'>
+		<IMG class='symbol sEnvy' src='envy.png' onclick='OpenImage("Envy")'>
 	</DIV>
 	<DIV class=symbols>	
-		<IMG class=symbol src='pride.png' onclick='OpenImage("Pride")'>
+		<IMG class='symbol sPride' src='pride.png' onclick='OpenImage("Pride")'>
 	</DIV>
 	<P>The artwork is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.</P>
 	<P><small>© GreatCorn, 2020</small></P>
