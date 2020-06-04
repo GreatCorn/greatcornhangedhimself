@@ -19,6 +19,12 @@
 		.symbol:hover{
 			transform: scale(1);
 		}
+		.sAcheron:hover{
+			box-shadow: inset 0 0 64px #000, 0 0 40px #000;
+		}
+		.sLimbo:hover{
+			box-shadow: inset 0 0 64px #FFF, 0 0 40px #FFF;
+		}
 		.sLust:hover{
 			box-shadow: inset 0 0 64px #0000FF, 0 0 40px #0000FF;
 		}
@@ -39,6 +45,9 @@
 		}
 		.sPride:hover{
 			box-shadow: inset 0 0 64px #FFFF14, 0 0 40px #FFFF14;
+		}
+		.sCocytus:hover{
+			box-shadow: inset 0 0 64px #7F7F7F, 0 0 40px #7F7F7F;
 		}
 		.symbols{
 			display: block;
@@ -101,7 +110,11 @@
 </HEAD>
 <BODY>
 	<DIV id='modalImg' class=modal onclick='style.display = "none"'>
-		<span class=helper></span><img class='modal-content' id='modalContent' src='Lust.jpg' onclick='window.open(this.src, "_blank");'>
+		<span class=helper></span><img class='modal-content' id='modalContent' onclick='window.open(this.src, "_blank");'>
+	</DIV>
+	<DIV class=symbols>
+		<IMG class='symbol sAcheron' src='acheron.png' onclick='OpenImage("Acheron")'>
+		<IMG class='symbol sLimbo' src='limbo.png' onclick='OpenImage("Limbo")'>
 	</DIV>
 	<DIV class=symbols>
 		<IMG class='symbol sLust' src='lust.png' onclick='OpenImage("Lust")'>
@@ -115,6 +128,9 @@
 	</DIV>
 	<DIV class=symbols>	
 		<IMG class='symbol sPride' src='pride.png' onclick='OpenImage("Pride")'>
+	</DIV>
+	<DIV class=symbols>	
+		<IMG class='symbol sCocytus' src='cocytus.png' onclick='OpenImage("Cocytus")'>
 	</DIV>
 	<P>The artwork is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.</P>
 	<P><small>© GreatCorn, 2020</small></P>
