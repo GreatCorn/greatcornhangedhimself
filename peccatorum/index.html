@@ -101,6 +101,16 @@
 	</STYLE>
 	<SCRIPT>
 		function OpenImage(imgstr){
+			if (imgstr == 'Cocytus') {
+				if (Math.random() > 0.9){
+					document.getElementById('modalContent').src = 'Cocytus.jpg';
+				}
+				else{
+					document.getElementById('modalContent').src = 'Judgement.jpg';
+				}
+				document.getElementById('modalImg').style.display = "block";
+				return;
+			}
 			document.getElementById('modalImg').style.display = "block";
 			document.getElementById('modalContent').src = imgstr+'.jpg';
 			//window.open(imgstr+'.jpg', "_blank");
