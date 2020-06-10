@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>SCP-087-B</title>
+		<link rel="shortcut icon" href="favicon.png">
+		<style>
+			body {
+				margin: 0;
+			}
+			canvas {
+				display: block;
+			}
+			@font-face {
+				font-family: "Pretext";
+				src: url("GFX/Pretext.TTF");
+				src: url("GFX/Pretext.woff");
+				src: url("GFX/Pretext.otf");
+			}
+		</style>
+		<script type="text/javascript" src="three.min.js" ></script>
+		<script type="text/javascript" src="MTLLoader.js" ></script>
+		<script type="text/javascript" src="OBJLoader.js" ></script>
+		<script type="text/javascript" src="FBXLoader.js" ></script>
+		<script>
+			var game, cam, microphone, renderer, mesh, meshFloor, collider;
+			var camrot = [0, 0, 0, 0];
+			var campos = [-2.5, -1.3, 0.5];
+			var keyboard = {};
+			const d2r = 0.0174532924;
+			const r2d = 57.29578;
+			var upVector = new THREE.Vector3(0, 1, 0);
+			var last, deltaTime = 0;
+			
+			var collidableMeshList = [];
+			var textureLoader;
+			var floorNumberTexture = [];
+			var brickwalltexture, sign, mental, tex173;
+			var glimpseTextures = [];
+			var stepsound, loudstepsound, deathSFX, roarSFX, breathSFX, stoneSFX, noSFX, dontlookSFX, fireOn, fireOff;
+			var horrorSFX = [], ambientSFX = [], radioSFX=[];
+			var musicPlaying = false;
+			
+			const ACT_STEPS = 1, ACT_LIGHTS = 2, ACT_FLASH = 3, ACT_WALK = 4, ACT_RUN = 5, ACT_KALLE = 6, ACT_BREATH = 7,
+			ACT_PROCEED = 8, ACT_TRAP=9, ACT_173 = 11, ACT_CELL = 12, ACT_LOCK = 13,
+			ACT_RADIO2 = 15, ACT_RADIO3 = 16, ACT_RADIO4 = 17, ACT_TRICK1 = 18, ACT_TRICK2 = 19,
+			ACT_ROAR = 20, ACT_DARKNESS = 21;
+			
+			var speed = 80;
+			var shake = -10.0, shakeX = -20.0, up = 0, side = 0;
+			var playerFloor;
+			
+			var floorAmount = 210;
+			var floorActions = [];
+			var floorTimer = [];
+			
+			function Start(){
+				document.getElementById("fontLoader").remove();
+				for (let i=0; i<=floorAmount; i++){
+					floorActions[i]=0;
+					floorTimer[i]=0;
+				}
+			
+				game = new THREE.Scene();
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.autoClear = false;
+				cam = new THREE.PerspectiveCamera(90, 1024/768, 0.001, 100);
+				game.fog = new THREE.Fog(0x0, 1, 2.5);
+				microphone = new THREE.AudioListener();
+				cam.add(microphone);
+				
+				collider = new THREE.Mesh(
+					new THREE.BoxGeometry(0.6, 0.6, 0.6),
+					new THREE.MeshPhongMaterial({
+						color:0xffffff
+					})
+				);
+				game.add(collider);
+				
+				textureLoader = new THREE.TextureLoader();
+				brickwalltexture = textureLoader.load("GFX/brickwall.jpg");
+				sign =  new Image();
+				sign.src = "GFX/sign.jpg";
+				var audioLoader = new THREE.AudioLoader();
+				stepsound = LoadSound(audioLoader, "SFX/step.wav");
+				loudstepsound = LoadSound(audioLoader, "SFX/loudstep.ogg");
+				for (let i=0; i<=2; i++){
+					horrorSFX[i] = LoadSound(audioLoader, "SFX/horror"+(i+1)+".ogg");
+				}
+				deathSFX = LoadSound(audioLoader, "SFX/death.ogg");
+				roarSFX = LoadSound(audioLoader, "SFX/roar.ogg");
+				breathSFX = LoadSound(audioLoader, "SFX/breath.ogg");
+				stoneSFX = LoadSound(audioLoader, "SFX/stone.ogg");
+				noSFX = LoadSound(audioLoader, "SFX/no.ogg");
+				for (let i=0; i<=8; i++){
+					ambientSFX[i] = LoadPositionalSound(audioLoader, "SFX/ambient"+(i+1)+".ogg");
+				}
+				dontlookSFX = LoadSound(audioLoader, "SFX/dontlook.ogg");
+				for (let i=0; i<=3; i++){
+					radioSFX[i] = LoadSound(audioLoader, "SFX/radio"+(i+1)+".ogg");
+				}
+				fireOn = LoadSound(audioLoader, "SFX/match.ogg");
+				fireOut = LoadSound(audioLoader, "SFX/fireout.ogg");
+				
+				//LOAD MENTALMESH
+				mental = textureLoader.load("GFX/mental.jpg");
+				tex173 = textureLoader.load("GFX/173.jpg");
+				
+				glimpseTextures[0] = textureLoader.load("GFX/glimpse1.png");
+				glimpseTextures[1] = textureLoader.load("GFX/glimpse2.png");
+				
+				CreateMap(floorAmount);
+				//CREATEGLIMSES
+				
+				ambientLight = new THREE.AmbientLight(0x3c3c3c);
+				game.add(ambientLight);
+				
+				//--------------------------------------------
+				//--------------------------------------------
+				document.body.appendChild(renderer.domElement);
+				if ("onpointerlockchange" in document) {
+					document.addEventListener('pointerlockchange', lockChangeAlert, false);
+				}
+				renderer.domElement.onclick = function(){
+					renderer.domElement.requestPointerLock();
+				}
+				renderer.domElement.onmousemove = function(event){
+					//cam.rotateX(-event.movementY*d2r);
+					camrot[0] -= event.movementX*d2r/4;
+					camrot[1] -= event.movementY*d2r/4;
+					camrot[1] = Clamp(camrot[1], -70*d2r, 70*d2r);
+					//console.log(cam.rotation.x*r2d);
+				}
+				document.onkeydown = function(event){
+					keyboard[event.keyCode] = true;
+				}
+				document.onkeyup = function(event){
+					keyboard[event.keyCode] = false;
+				}
+				Resize();
+				Render();
+			}
+			function lockChangeAlert() {
+				document.getElementById("music").play();
+			}
+			function Resize(){
+				renderer.width = window.innerWidth;
+				renderer.height = window.innerHeight;
+				cam.aspect = renderer.width/renderer.height;
+				cam.updateProjectionMatrix();
+				renderer.setSize(renderer.width, renderer.height);
+			}
+			function Render(now){
+				if (!isNaN(last)){deltaTime = Math.min(1, (now - last) / 1000);}
+				last = now;
+				camrot[2] = Lerp(camrot[2], camrot[0], deltaTime*12);
+				camrot[3] = Lerp(camrot[3], camrot[1], deltaTime*12);
+				cam.quaternion.setFromEuler(new THREE.Euler(camrot[3], camrot[2], 0, 'YXZ'));
+				cam.position.x = campos[0]+side*Math.cos(camrot[2]);
+				cam.position.y = campos[1]+up+1;
+				cam.position.z = campos[2]-side*Math.sin(camrot[2]);
+				//collider.position.x = campos[0];
+				collider.position.y = campos[1];
+				//collider.position.z = campos[2];
+				
+				playerFloor = (-collider.position.y-0.5)/2;
+				
+				if(keyboard[87]){ // W key
+					//cam.translateZ(-0.02*speed);
+					campos[0] -= (Math.sin(camrot[0])*0.02)*speed*deltaTime;
+					campos[2] -= (Math.cos(camrot[0])*0.02)*speed*deltaTime;
+				}
+				if(keyboard[83]){ // S key
+					//cam.translateZ(0.015*speed);
+					campos[0] += (Math.sin(camrot[0])*0.015)*speed*deltaTime;
+					campos[2] += (Math.cos(camrot[0])*0.015)*speed*deltaTime;
+				}
+				if(keyboard[69]){ // E key
+					campos[1] += 0.02*speed*deltaTime;
+				}
+				if(keyboard[81]){ // Q key
+					campos[1] -= 0.02*speed*deltaTime;
+				}
+				if(keyboard[87] || keyboard[83] || keyboard[65] || keyboard[68]){
+					shake = shake + 0.5;
+					if (shake == 10.0) {shake = -10.0; stepsound.play(); console.log("STEP");}
+					
+					if (shake < 0.0){
+						up -= 0.005;
+					}
+					else{
+						up += 0.005;
+					}
+					
+					shakeX = shakeX + 0.5;
+					if (shakeX == 20.0){shakeX = -20.0;}
+					
+					if (shakeX < 0.0){
+						side -= 0.002;
+					}
+					else{
+						side += 0.002;
+					}
+				}
+				if(keyboard[65]){ // A key
+					//cam.translateX(-0.008*speed);
+					campos[0] -= (Math.cos(camrot[0])*0.008)*speed*deltaTime;
+					campos[2] += (Math.sin(camrot[0])*0.008)*speed*deltaTime;
+				}
+				if(keyboard[68]){ // D key
+					//cam.translateX(0.008*speed);
+					campos[0] += (Math.cos(camrot[0])*0.008)*speed*deltaTime;
+					campos[2] -= (Math.sin(camrot[0])*0.008)*speed*deltaTime;
+				}
+				//UPDATEENEMIES
+				
+				if (Math.random()*1000 < 2){
+					var index = Math.floor(Math.random()*8);
+					console.log("AMBIENT");
+					ambientSFX[index].panner.setPosition(cam.position.x+RandomRange(-1,1), cam.position.y+RandomRange(-10,-2), cam.position.z+RandomRange(-1,1));
+					ambientSFX[index].play();
+				}
+				
+				for (var vertexIndex = 0; vertexIndex < collider.geometry.vertices.length; vertexIndex++){       
+					var localVertex = collider.geometry.vertices[vertexIndex].clone();
+					var globalVertex = localVertex.applyMatrix4(collider.matrix);
+					var directionVector = globalVertex.sub( collider.position );
+
+					var ray = new THREE.Raycaster( collider.position, directionVector.clone().normalize() );
+					var collisionResults = ray.intersectObjects( collidableMeshList );
+					if ( collisionResults.length > 0 && collisionResults[0].distance < directionVector.length() ) 
+					{
+						console.log("COLLISION");
+					}
+				}
+				
+				//UPDATEFLOORS
+				//UPDATEGLIMPSES
+				renderer.render(game, cam);
+				requestAnimationFrame(Render);
+			}
+			function DrawFloorMarkers(){
+				for(let i=1; i<=floorAmount; i++){
+					var number="";
+					
+					switch (RandomRange(1,600)){
+						case 1:
+							number = "";
+							break;
+						case 2:
+							number = RandomRange(33,122);
+							break;
+						case 3:
+							number = "NIL"
+							break;
+						case 4:
+							number = "?"
+							break;
+						case 5:
+							number = "NO"
+							break;
+						case 6:
+							number = "stop"
+							break;
+						default:
+							number = (i+1)
+							break;
+					}
+					
+					if (i > 140){
+						number = "";
+						for (let n=1; n<=RandomRange(1,4); n++){
+							number += String.fromCharCode(RandomRange(33, 122));
+						}
+					}
+					
+					var bitmap = document.createElement('canvas');
+					var g = bitmap.getContext('2d');
+					bitmap.width = 512;
+					bitmap.height = 512;
+					g.font = '128px Pretext';
+					g.textAlign = "center";
+					g.textBaseline = "middle";
+					g.drawImage(sign, 0, 0, 512, 512);
+					g.fillStyle = 'black';
+					g.fillText(number, 256, 256);
+					
+					floorNumberTexture[i] = new THREE.Texture(bitmap);
+					floorNumberTexture[i].needsUpdate = true;
+					
+					var cube = new THREE.Mesh(
+						new THREE.BoxGeometry(0.5,0.5,0.5),
+						new THREE.MeshPhongMaterial({
+							color:0xffffff,
+							map:floorNumberTexture[i],
+						})
+					);
+					game.add(cube);
+					if (Math.floor(i/2.0) == Math.ceil(i/2.0)){
+						cube.position.set(-0.24, -i*2-0.6, 0.5);
+					}
+					else{
+						cube.position.set(8.24, -i*2-0.6, 6.5);
+					}
+					
+					bitmap.remove();
+				}
+			}
+			async function CreateMap(floors){
+				map0 = await LoadMesh("GFX/map0");
+				map = await LoadMesh("GFX/map");
+				map1 = await LoadMesh("GFX/map1");
+				map2 = await LoadMesh("GFX/map2");
+				map3 = await LoadMesh("GFX/map3");
+				map4 = await LoadMesh("GFX/map4");
+				map5 = await LoadMesh("GFX/map5");
+				map6 = await LoadMesh("GFX/map6");
+				map7 = await LoadMesh("GFX/maze");
+				
+				var doortexture = textureLoader.load("GFX/door.jpg");
+				var door = new THREE.Mesh(
+					new THREE.BoxGeometry(1,2,1),
+					new THREE.MeshPhongMaterial({
+						color:0xffffff,
+						map:doortexture,
+					})
+				);
+				game.add(door);
+				door.position.set(-3.5, -1, 0.5);
+				
+				floorActions[1] = ACT_PROCEED;
+				floorTimer[1] = 1;
+				
+				var temp;
+				if (Math.random()<0.5){
+					temp = RandomRange(3, 4);
+					floorActions[temp] = ACT_RADIO2;
+					floorTimer[temp] = 1;
+				}
+				if (Math.random()<1){
+					temp = RandomRange(5, 6);
+					floorActions[temp] = ACT_RADIO3;
+					floorTimer[temp] = 1;
+				}
+				
+				floorActions[7] = ACT_LOCK;
+				floorTimer[7] = 1;
+				
+				if (Math.random()<0.5){
+					temp = RandomRange(8, 9);
+					floorActions[temp] = ACT_RADIO4;
+					floorTimer[temp] = 1;
+				}
+				
+				temp = RandomRange(10, 11);
+				floorActions[temp] = ACT_BREATH;
+				floorTimer[temp] = 1;
+				
+				temp = RandomRange(12, 13);
+				floorActions[temp] = ACT_STEPS;
+				floorTimer[temp] = 1;
+				
+				temp = RandomRange(10, 19);
+				floorActions[temp] = ACT_FLASH;
+				floorTimer[temp] = RandomRange(1,3);
+				
+				temp = RandomRange(20, 22);
+				floorActions[temp] = ACT_LIGHTS;
+				floorTimer[temp] = 1;
+				
+				switch (RandomRange(1, 4)){
+					case 1:
+						temp = RandomRange(25, 28);
+						floorActions[temp] = ACT_TRICK1;
+						floorTimer[temp] = 1;
+						break;
+					case 2:
+						temp = RandomRange(25, 28);
+						floorActions[temp] = ACT_TRICK2;
+						floorTimer[temp] = 1;
+						break;
+				}
+				
+				temp = RandomRange(29, 33);
+				floorActions[temp] = ACT_RUN;
+				floorTimer[temp] = 1;
+				
+				temp = RandomRange(34, 37);
+				floorActions[temp] = ACT_173;
+				floorTimer[temp] = 1;
+				
+				temp = RandomRange(40, 60);
+				floorActions[temp] = ACT_RUN;
+				floorTimer[temp] = 1;
+				temp = RandomRange(40, 60);
+				floorActions[temp] = ACT_ROAR;
+				floorTimer[temp] = 1;
+				temp = RandomRange(40, 60);
+				floorActions[temp] = ACT_TRAP;
+				floorTimer[temp] = 1;
+				temp = RandomRange(40, 60);
+				floorActions[temp] = ACT_FLASH;
+				floorTimer[temp] = 1;
+				
+				console.log("RANDOM EVENTS 25-69");
+				
+				var randact = 0;
+				for (let i=0; i<=8; i++){
+					switch (RandomRange(1, 10)){
+						case 1:
+							randact = ACT_CELL;
+							break;
+						case 2:
+							randact = ACT_FLASH;
+							break;
+						case 3:
+							randact = ACT_TRICK1;
+							break;
+						case 4:
+							randact = ACT_TRICK2;
+							break;
+						case 5:
+							randact = ACT_BREATH;
+							break;
+						case 6:
+							randact = ACT_STEPS;
+							break;
+						case 7:
+							randact = ACT_TRAP;
+							break;
+						case 8:
+							randact = ACT_ROAR;
+							break;
+						case 9:
+							randact = ACT_CELL;
+							break;
+					}
+					var temper = false;
+					while (!temper){
+						temp = RandomRange(25,69);
+						if (floorActions[temp] == 0) {
+							floorActions[temp] = randact;
+							floorTimer[temp] = 1;
+							temper = true;
+						}
+					}
+				}
+				
+				console.log("RANDOM EVENTS 75-200");
+				
+				randact = 0;
+				for (let i=0; i<=60; i++){
+					switch (RandomRange(1, 10)){
+						case 1:
+							randact = ACT_CELL;
+							break;
+						case 2:
+							randact = ACT_FLASH;
+							break;
+						case 3:
+							randact = ACT_TRICK1;
+							break;
+						case 4:
+							randact = ACT_TRICK2;
+							break;
+						case 5:
+							randact = ACT_BREATH;
+							break;
+						case 6:
+							randact = ACT_STEPS;
+							break;
+						case 7:
+							randact = ACT_TRAP;
+							break;
+						case 8:
+							randact = ACT_ROAR;
+							break;
+						case 9:
+							randact = ACT_CELL;
+							break;
+					}
+					var temper = false;
+					while (!temper){
+						temp = RandomRange(75,200);
+						if (floorActions[temp] == 0) {
+							floorActions[temp] = randact;
+							floorTimer[temp] = 1;
+							temper = true;
+						}
+					}
+				}
+				
+				temp = RandomRange(150, 200);
+				floorActions[temp] = ACT_DARKNESS;
+				floorTimer[temp] = 1;
+				
+				console.log("ASSIGNING EVENTS");
+				
+				for (let i=0; i<floors; i++){
+					if (i == 0){
+						temp = map0;
+					}
+					else{
+						switch (floorActions[i+1]){
+							case ACT_173:
+								temp = map2.clone();
+								break;
+							case ACT_CELL:
+								temp = map1.clone();
+								break;
+							case ACT_TRICK1:
+								temp = map4.clone();
+								break;
+							case ACT_TRICK2:
+								temp = map5.clone();
+								break;
+							case ACT_FLASH: case ACT_RUN: case ACT_WALK: case ACT_LIGHTS: case ACT_TRAP: case ACT_LOCK:
+								temp = map.clone();
+								break;
+							case 0:
+								switch(RandomRange(1, 20)){
+									case 1: case 2:
+										temp = map1.clone();
+										break;
+									case 3: case 4:
+										temp = map2.clone();
+										break;
+									case 5: case 6:
+										temp = map3.clone();
+										break;
+									case 7:
+										temp = map4.clone();
+										break;
+									case 8:
+										temp = map5.clone();
+										break;
+									case 9:
+										temp = map6.clone();
+										break;
+									case 10:
+										if (i>40){temp = map7.clone();}else{temp = map.clone();}
+										break;
+									default:
+										temp = map.clone();
+										break;0
+								}
+								break;
+							default:
+								temp = map.clone();
+								break;
+						}
+					}
+					game.add(temp);
+					collidableMeshList[i] = temp;
+					if (Math.floor(i/2)==Math.ceil(i/2)){
+						temp.position.set(0, -i*2, 0);
+					}
+					else{
+						temp.rotateY(180*d2r);
+						temp.position.set(8, -i*2, 7);
+					}
+				}
+				
+				DrawFloorMarkers();
+			}
+			
+			function UpdateFloors(){
+				var floorX, floorY, floorZ;
+				var startX, endX;
+				
+				for (let i=0; i<floorAmount; i++){
+					if (floorTimer[i] > 0){
+						floorX = 4;
+						floorY = -1-(i-1)*2;
+						
+						if (Math.floor(i/2.0) == Math.ceil(i/2.0)){
+							floorZ = 6.75;
+							startX = 7.5;
+							endX = 0.5;
+						}
+						else{
+							floorZ = 0.25;
+							startX = 0.5;
+							endX = 7.5;
+						}
+						
+						switch (floorActions[i]){
+							case ACT_LIGHTS:
+								if (floorTimer[i]>1){
+									floorTimer[i] += 1;
+									
+									if (floorTimer[i] > 100){
+										
+									}
+								}
+						}
+					}
+				}
+			}
+			
+			function LoadMesh(fname){
+				var meshReturn;
+				return new Promise(function(resolve, reject){
+					function loadDone(x){
+						resolve(x);
+					}
+					var mtlLoader = new THREE.MTLLoader();
+					mtlLoader.load(fname+".mtl", function(materials){
+						materials.preload();
+						var objLoader = new THREE.OBJLoader();
+						objLoader.setMaterials(materials);
+						objLoader.load(fname+".obj", function(mesh){
+							meshReturn = mesh;
+							loadDone(mesh);
+						});
+					});
+				});
+			}
+			function LoadPositionalSound(loader, fname){
+				var sound = new THREE.PositionalAudio(microphone);
+				loader.load(fname, function(buffer){
+					sound.setBuffer(buffer);
+					sound.setRefDistance(20);
+					sound.setVolume(0.5);
+				});
+				return sound;
+			}
+			function LoadSound(loader, fname){
+				var sound = new THREE.Audio(microphone);
+				loader.load(fname, function(buffer){
+					sound.setBuffer(buffer);
+					sound.setVolume(0.5);
+				});
+				return sound;
+			}
+			function Lerp(a, b, t){
+				return a + (b - a) * t;
+			}
+			function RandomRange(min, max) {
+				return Math.floor(Math.random() * (max - min + 1) + min);
+			}
+			function Clamp(val, min, max){
+				if (val < min){
+					val = min;
+				}
+				if (val > max){
+					val = max;
+				}
+				return val;
+			}
+		</script>
+	</head>
+	<body onload="Start()" onresize="Resize()">
+		<audio id="music" src="SFX/music.ogg" loop="loop"></audio>
+		<div id="fontLoader" style="font-family: Pretext;">.</div>
+	</body>
+</html>

@@ -1,0 +1,30 @@
+# Wavefront MTL
+# Created by fragMOTION 1.3.4
+# http://www.fragmosoft.com
+
+newmtl mat_0
+illum 2
+d 1
+ka 1 1 1
+kd 1 1 1
+ks 0 0 0
+ke 0 0 0
+ns 0
+newmtl mat_1
+illum 2
+d 1
+ka 1 1 1
+kd 1 1 1
+ks 0 0 0
+ke 0 0 0
+ns 0
+map_kd GFX\concretefloor.jpg
+newmtl mat_2
+illum 2
+d 1
+ka 1 1 1
+kd 1 1 1
+ks 0 0 0
+ke 0 0 0
+ns 0
+map_kd GFX\brickwall.jpg
