@@ -1,0 +1,8 @@
+BODY {
+	margin: 8px;
+}
+.field {
+	resize: none;
+	width: calc(50% - 4px);
+	height: 40%;
+}

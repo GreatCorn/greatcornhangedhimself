@@ -1,0 +1,42 @@
+<HTML>
+	<HEAD>
+		<TITLE>Курлыкистаненъ переводчик</TITLE>
+		<LINK rel="stylesheet" type="text/css" href="style.css">
+		<SCRIPT src="lang.json" type="text/javascript" charset="UTF-8" ></SCRIPT>
+		<SCRIPT>
+			var input, output;
+			function MatchCase(text, pattern) {
+				var result = '';
+				for(var i = 0; i < text.length; i++) {
+					var c = text.charAt(i);
+					var p = pattern.charAt(i);
+					if(p == p.toLowerCase()) {
+						result += c.toLowerCase();
+					} else {
+						result += c.toUpperCase();
+					}
+				}
+				return result;
+			}
+			
+			function OnLoad(){
+				input = document.getElementById("input");
+				output = document.getElementById("output");		
+			}
+			function OnInput(){
+				let str = input.value;
+				for (let key in lang){
+					let re = new RegExp("(?<![\u0400-\u04ff])"+key+"(?=\\s|$|\\.|\\,|\\!|\\?|\\:|\\;|\\-)", 'ig');
+					str = str.replace(re, function(match){
+						return MatchCase(lang[key], match);
+					});
+				}
+				output.value = str;
+			}
+		</SCRIPT>
+	</HEAD>
+	<BODY onload=OnLoad()>
+		<TEXTAREA id=input class=field oninput=OnInput()></TEXTAREA>
+		<TEXTAREA id=output class=field readonly=true></TEXTAREA>
+	</BODY>
+</HTML>
