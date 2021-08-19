@@ -1,0 +1,183 @@
+<HTML>
+<HEAD>
+	<STYLE>
+		BODY {
+			margin: 0;
+		}
+		CANVAS {
+			border: 1px solid;
+		}
+		DIV {
+			display: inline-block;
+		    position: relative;
+			vertical-align: middle;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			text-align: center;
+		}
+	</STYLE>
+	<SCRIPT>
+		var canvas, ctx, link, preview, previewCtx, scaleNumber, scaleRange, tiltAngleNumber, tiltAngleRange, upload, xNumber, yNumber;
+		var mousePressed = false, lastMouseX = 0, lastMouseY = 0;
+		var mirrorType = 0, tilt = 0, scale = 1;
+		var img = new Image();
+		var x = 0, y = 0;
+		var loaded = false;
+		
+		var MirrorType = {
+			Horizontal:			0,
+			HorizontalFlipped:	1,
+			Vertical:			2,
+			VerticalFlipped:	3,
+			All:				4,
+			AllFlipped:			5
+		}
+		
+		function Load(){
+			canvas = document.getElementById("canvas");
+			ctx = canvas.getContext("2d");
+			link = document.getElementById("link");
+			preview = document.getElementById("preview");
+			previewCtx = preview.getContext("2d");
+			scaleNumber = document.getElementById("scaleNumber");
+			scaleRange = document.getElementById("scaleRange");
+			tiltAngleNumber = document.getElementById("tiltAngleNumber");
+			tiltAngleRange = document.getElementById("tiltAngleRange");
+			upload = document.getElementById("upload");
+			xNumber = document.getElementById("xNumber");
+			yNumber = document.getElementById("yNumber");
+		}
+		
+		function Render(){
+			preview.width = img.width * scale;
+			preview.height = img.height * scale;
+			previewCtx.clearRect(0, 0, preview.width, preview.height);
+			previewCtx.save();
+			previewCtx.translate(preview.width*0.5, preview.height*0.5);
+			previewCtx.rotate(tilt*0.017453292);
+			switch (mirrorType){
+				case MirrorType.HorizontalFlipped:
+					previewCtx.scale(-1, 1);
+					break;
+				case MirrorType.VerticalFlipped:
+					previewCtx.scale(1, -1);
+					break;
+				case MirrorType.AllFlipped:
+					previewCtx.scale(-1, -1);
+					break;
+			}
+			previewCtx.drawImage(img, 0, 0, img.width, img.height, -preview.width*0.5, -preview.height*0.5, preview.width, preview.height);
+			previewCtx.restore();
+			
+			let halfSize = [canvas.width*0.5, canvas.height*0.5];
+			ctx.save();
+			switch(mirrorType){
+				case MirrorType.Horizontal:
+				case MirrorType.HorizontalFlipped:
+					canvas.width = x+preview.width;
+					canvas.height = preview.height;
+					
+					ctx.drawImage(preview, 0, 0, halfSize[0], canvas.height, 0, 0, halfSize[0], canvas.height);
+					ctx.translate(canvas.width, 0);
+					ctx.scale(-1, 1);
+					ctx.drawImage(preview, 0, 0, halfSize[0], canvas.height, 0, 0, halfSize[0], canvas.height);
+					break;
+				case MirrorType.Vertical:
+				case MirrorType.VerticalFlipped:
+					canvas.width = preview.width;
+					canvas.height = y+preview.height;
+					ctx.drawImage(preview, 0, 0, canvas.width, halfSize[1], 0, 0, canvas.width, halfSize[1]);
+					ctx.translate(0, canvas.height);
+					ctx.scale(1, -1);
+					ctx.drawImage(preview, 0, 0, canvas.width, halfSize[1], 0, 0, canvas.width, halfSize[1]);
+					break;
+				case MirrorType.All:
+				case MirrorType.AllFlipped:
+					canvas.width = x+preview.width;
+					canvas.height = y+preview.height;
+					ctx.drawImage(preview, 0, 0, halfSize[0], halfSize[1], 0, 0, halfSize[0], halfSize[1]);
+					ctx.translate(canvas.width, 0);
+					ctx.scale(-1, 1);
+					ctx.drawImage(preview, 0, 0, halfSize[0], halfSize[1], 0, 0, halfSize[0], halfSize[1]);
+					ctx.translate(0, canvas.height);
+					ctx.scale(1, -1);
+					ctx.drawImage(preview, 0, 0, halfSize[0], halfSize[1], 0, 0, halfSize[0], halfSize[1]);
+					ctx.translate(canvas.width, 0);
+					ctx.scale(-1, 1);
+					ctx.drawImage(preview, 0, 0, halfSize[0], halfSize[1], 0, 0, halfSize[0], halfSize[1]);
+					break;
+			}
+			ctx.restore();
+			requestAnimationFrame(Render);
+		}
+		
+		function InputFile(){
+			img.src = URL.createObjectURL(upload.files[0]);
+			img.onload = function(){
+				preview.width = img.width;
+				preview.height = img.height;
+				x = 0;
+				y = 0;
+				xNumber.value = 0;
+				yNumber.value = 0;
+				tilt = 0;
+				scale = 1;
+				if(!loaded)
+					requestAnimationFrame(Render);
+				loaded = true;
+			}
+		}
+		
+		function MouseMove(e){
+			if(mousePressed){
+				//x = e.screenX-window.innerWidth*0.5;
+				//y = e.screenY-window.innerHeight*0.5;
+				x += e.screenX - lastMouseX;
+				y += e.screenY - lastMouseY;
+				xNumber.value = x;
+				yNumber.value = y;
+				lastMouseX = e.screenX;
+				lastMouseY = e.screenY;
+			}
+		}
+		
+		function MouseDown(e){
+			mousePressed = true;
+			lastMouseX = event.screenX;
+			lastMouseY = event.screenY;
+		}
+		
+		function Save(){
+			link.setAttribute("download", Date.now().toString()+".png");
+			link.setAttribute("href", canvas.toDataURL("image/png").replace("image/png", "image/octet-stream"));
+			link.click();
+		}
+	</SCRIPT>
+</HEAD>
+<BODY onload=Load() onmousemove=MouseMove(event) onmouseup="mousePressed = false">
+	<DIV>
+		<CANVAS id=preview style="display: none; position: absolute;"></CANVAS>
+		<CANVAS id=canvas onmousedown=MouseDown(event)></CANVAS>
+		<BR>
+		<INPUT type=file accept="image/*" id=upload onchange=InputFile()>
+		<P>X: <INPUT id=xNumber type="number" step="1" value="0" oninput="x = this.valueAsNumber;"> Y: <INPUT id=yNumber type="number" step="1" value="0" oninput="y = this.valueAsNumber;"></P>
+		<LABEL for=mirrorTypeSelect>Mirror type: </LABEL><SELECT id=mirrorTypeSelect onchange="mirrorType = this.selectedIndex;">
+			<OPTION>Horizontal</OPTION>
+			<OPTION>Horizontal flipped</OPTION>
+			<OPTION>Vertical</OPTION>
+			<OPTION>Vertical flipped</OPTION>
+			<OPTION>All</OPTION>
+			<OPTION>All flipped</OPTION>
+		</SELECT>
+		<LABEL for=tiltAngleRange>Tilt: </LABEL>
+			<INPUT id=tiltAngleRange type="range" min="-45" max="45" step="1" value="0" oninput="tilt = this.value; tiltAngleNumber.value = this.value;">
+			<INPUT id=tiltAngleNumber type="number" min="-45" max="45" step="1" value="0" oninput="tilt = this.value; tiltAngleRange.value = this.value;">
+		<LABEL for=scaleRange>Scale: </LABEL>
+			<INPUT id=scaleRange type="range" min="0.1" max="10" step="0.1" value="1" oninput="scale = this.value; scaleNumber.value = this.value;">
+			<INPUT id=scaleNumber type="number" min="0.1" max="10" step="0.1" value="1" oninput="scale = this.value; scaleRange.value = this.value;">
+		<BUTTON onclick="Save()">Save</BUTTON>
+		<A id=link></A>
+	</DIV>
+</BODY>
+</HTML>
