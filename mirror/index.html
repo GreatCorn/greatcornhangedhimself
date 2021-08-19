@@ -1,5 +1,7 @@
 <HTML>
 <HEAD>
+	<META name="viewport" content="width=device-width, initial-scale=0.6">
+	<TITLE>Mirror</TITLE>
 	<STYLE>
 		BODY {
 			margin: 0;
@@ -130,22 +132,46 @@
 		}
 		
 		function MouseMove(e){
+			e.preventDefault();
 			if(mousePressed){
-				//x = e.screenX-window.innerWidth*0.5;
-				//y = e.screenY-window.innerHeight*0.5;
-				x += e.screenX - lastMouseX;
-				y += e.screenY - lastMouseY;
+				switch (e.type){
+					case "touchmove":
+						x += e.touches[0].screenX - lastMouseX;
+						y += e.touches[0].screenY - lastMouseY;
+						lastMouseX = e.touches[0].screenX;
+						lastMouseY = e.touches[0].screenY;
+						break;
+					case "mousemove":
+						x += e.screenX - lastMouseX;
+						y += e.screenY - lastMouseY;
+						lastMouseX = e.screenX;
+						lastMouseY = e.screenY;
+						break;
+				}
 				xNumber.value = x;
 				yNumber.value = y;
-				lastMouseX = e.screenX;
-				lastMouseY = e.screenY;
 			}
 		}
 		
 		function MouseDown(e){
+			e.preventDefault();
 			mousePressed = true;
-			lastMouseX = event.screenX;
-			lastMouseY = event.screenY;
+			//canvas.requestPointerLock();
+			switch (e.type){
+				case "touchstart":
+					lastMouseX = e.touches[0].screenX;
+					lastMouseY = e.touches[0].screenY;
+					break;
+				case "mousedown":
+					lastMouseX = e.screenX;
+					lastMouseY = e.screenY;
+					break;
+			}
+		}
+		
+		function MouseUp(e){
+			mousePressed = false;
+			//document.exitPointerLock();
 		}
 		
 		function Save(){
@@ -155,13 +181,13 @@
 		}
 	</SCRIPT>
 </HEAD>
-<BODY onload=Load() onmousemove=MouseMove(event) onmouseup="mousePressed = false">
+<BODY onload=Load() onmousemove=MouseMove(event) ontouchmove=MouseMove(event) onmouseup=MouseUp(event) ontouchend=MouseUp(event)>
 	<DIV>
 		<CANVAS id=preview style="display: none; position: absolute;"></CANVAS>
-		<CANVAS id=canvas onmousedown=MouseDown(event)></CANVAS>
+		<CANVAS id=canvas onmousedown=MouseDown(event) ontouchstart=MouseDown(event)></CANVAS>
 		<BR>
 		<INPUT type=file accept="image/*" id=upload onchange=InputFile()>
-		<P>X: <INPUT id=xNumber type="number" step="1" value="0" oninput="x = this.valueAsNumber;"> Y: <INPUT id=yNumber type="number" step="1" value="0" oninput="y = this.valueAsNumber;"></P>
+		<P>X: <INPUT id=xNumber type="number" step="1" value="0" oninput="x = this.valueAsNumber;" style="width: 5em"> Y: <INPUT id=yNumber type="number" step="1" value="0" oninput="y = this.valueAsNumber;" style="width: 5em"></P>
 		<LABEL for=mirrorTypeSelect>Mirror type: </LABEL><SELECT id=mirrorTypeSelect onchange="mirrorType = this.selectedIndex;">
 			<OPTION>Horizontal</OPTION>
 			<OPTION>Horizontal flipped</OPTION>
@@ -170,12 +196,15 @@
 			<OPTION>All</OPTION>
 			<OPTION>All flipped</OPTION>
 		</SELECT>
+		<BR>
 		<LABEL for=tiltAngleRange>Tilt: </LABEL>
 			<INPUT id=tiltAngleRange type="range" min="-45" max="45" step="1" value="0" oninput="tilt = this.value; tiltAngleNumber.value = this.value;">
 			<INPUT id=tiltAngleNumber type="number" min="-45" max="45" step="1" value="0" oninput="tilt = this.value; tiltAngleRange.value = this.value;">
+		<BR>
 		<LABEL for=scaleRange>Scale: </LABEL>
 			<INPUT id=scaleRange type="range" min="0.1" max="10" step="0.1" value="1" oninput="scale = this.value; scaleNumber.value = this.value;">
 			<INPUT id=scaleNumber type="number" min="0.1" max="10" step="0.1" value="1" oninput="scale = this.value; scaleRange.value = this.value;">
+		<BR>
 		<BUTTON onclick="Save()">Save</BUTTON>
 		<A id=link></A>
 	</DIV>
