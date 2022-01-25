@@ -2,6 +2,10 @@
 	<HEAD>
 		<TITLE>Курлыкистаненъ переводчик</TITLE>
 		<LINK rel="stylesheet" type="text/css" href="style.css">
+		<STYLE>@font-face {
+	font-family: "kurlyk";
+	src: url("KurlykistanianScript-Regular.otf");
+}</STYLE>
 		<SCRIPT src="lang.json" type="text/javascript" charset="UTF-8" ></SCRIPT>
 		<SCRIPT>
 			var input, output;
@@ -37,6 +41,6 @@
 	</HEAD>
 	<BODY onload=OnLoad()>
 		<TEXTAREA id=input class=field oninput=OnInput()></TEXTAREA>
-		<TEXTAREA id=output class=field readonly=true></TEXTAREA>
+		<TEXTAREA id=output class=field style='font-family: "kurlyk"' readonly=true></TEXTAREA>
 	</BODY>
 </HTML>
