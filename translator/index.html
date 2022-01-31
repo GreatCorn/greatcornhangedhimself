@@ -8,7 +8,7 @@
 }</STYLE>
 		<SCRIPT src="lang.json" type="text/javascript" charset="UTF-8" ></SCRIPT>
 		<SCRIPT>
-			var input, output;
+			var input, output, reverse;
 			function MatchCase(text, pattern) {
 				var result = '';
 				for(var i = 0; i < text.length; i++) {
@@ -25,15 +25,24 @@
 			
 			function OnLoad(){
 				input = document.getElementById("input");
-				output = document.getElementById("output");		
+				output = document.getElementById("output");	
+				reverse = document.getElementById("reverse");
 			}
 			function OnInput(){
 				let str = input.value;
 				for (let key in lang){
-					let re = new RegExp("(?<![\u0400-\u04ff])"+key+"(?=\\s|$|\\.|\\,|\\!|\\?|\\:|\\;|\\-)", 'ig');
-					str = str.replace(re, function(match){
-						return MatchCase(lang[key], match);
-					});
+					if (reverse.checked){
+						let re = new RegExp("(?<![\u0400-\u04ff])"+lang[key]+"(?=\\s|$|\\.|\\,|\\!|\\?|\\:|\\;|\\-)", 'ig');
+						str = str.replace(re, function(match){
+							return MatchCase(key, match);
+						});
+					}
+					else{
+						let re = new RegExp("(?<![\u0400-\u04ff])"+key+"(?=\\s|$|\\.|\\,|\\!|\\?|\\:|\\;|\\-)", 'ig');
+						str = str.replace(re, function(match){
+							return MatchCase(lang[key], match);
+						});
+					}
 				}
 				output.value = str;
 			}
@@ -42,5 +51,7 @@
 	<BODY onload=OnLoad()>
 		<TEXTAREA id=input class=field oninput=OnInput()></TEXTAREA>
 		<TEXTAREA id=output class=field style='font-family: "kurlyk"' readonly=true></TEXTAREA>
+		<INPUT id=reverse type=checkbox>
+		<LABEL for=reverse>Reverse</LABEL>
 	</BODY>
 </HTML>
